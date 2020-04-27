@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from flask import Flask, request
 from flask_restful import Resource, Api
 from functools import wraps
@@ -12,11 +14,17 @@ HTTP_REQUEST = google.auth.transport.requests.Request()
 def jwt_required_gcp(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        id_token = request.headers['Authorization'].split(' ').pop()
+        print(request.headers, "***")
+        try:
+            id_token = request.headers['Authorization'].split(' ').pop()
+        except KeyError:
+            return 'Unauthorized'\
+                , HTTPStatus.UNAUTHORIZED
         claims = google.oauth2.id_token.verify_firebase_token(
             id_token, HTTP_REQUEST)
         if not claims:
-            return 'Unauthorized', 401
+            return 'Unauthorized',\
+                   HTTPStatus.UNAUTHORIZED
         return fn(*args, **kwargs)
     return wrapper
 
